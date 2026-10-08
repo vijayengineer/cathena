@@ -146,6 +146,17 @@ button { font: inherit; color: inherit; }
 .ptitle { font-family: var(--f-disp); font-weight: 700; font-size: 1.05rem; }
 .pnl { font-family: var(--f-disp); font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em; text-align: right; }
 .bk-list { display: grid; gap: 8px; }
+.bk-wallet { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--s2); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+.bk-wallet .who { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.bk-wallet .who b { font-family: var(--f-mono); font-size: .95rem; }
+.bk-wallet .who span { color: var(--ink3); font-size: .74rem; }
+.bk-wallet .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.bk-wallet .acts button { padding: 7px 12px; }
+.bk-wallet .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bull); box-shadow: 0 0 0 4px color-mix(in srgb, var(--bull) 20%, transparent); flex: none; }
+.bk-wallet .dot.off { background: var(--ink3); box-shadow: none; }
+.bk-wallet .who b { white-space: nowrap; }
+@media (max-width: 520px) { .bk-wallet .acts { width: 100%; } .bk-wallet .acts button { flex: 1; } }
+.dt-avatar { cursor: pointer; }
 .bk-row { background: var(--s2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 4px; }
 .bk-row .r1 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-weight: 700; }
 .bk-row .r2 { font-family: var(--f-mono); font-size: .74rem; color: var(--ink2); display: flex; flex-wrap: wrap; gap: 4px 12px; }
@@ -620,7 +631,8 @@ canvas.fx { position: fixed; inset: 0; pointer-events: none; z-index: 20; width:
 </div>
 <div class="sheet" id="bookSheet" hidden>
   <div class="panel">
-    <div class="row"><div><div class="brand" style="font-size:1.2rem">Your positions</div><div class="sub" id="bkSub" style="font-size:.8rem"></div></div><button class="ghost" id="bkClose" style="padding:6px 12px">Close</button></div>
+    <div class="row"><div><div class="brand" style="font-size:1.2rem">Your account</div><div class="sub" id="bkSub" style="font-size:.8rem"></div></div><button class="ghost" id="bkClose" style="padding:6px 12px">Close</button></div>
+    <div id="bkWallet" class="bk-wallet"></div>
     <div class="kv" id="bkKv"></div>
     <div id="bkList" class="bk-list"></div>
   </div>
@@ -1085,7 +1097,31 @@ async function openBook() {
   $("bookSheet").hidden = false; renderBook();
   await fetchPositions(); renderBook();
 }
+async function signOut() {
+  try { await api("/v1/auth/logout", { body: {} }); } catch (e) { /* the cookie is cleared either way */ }
+  suMsg = {}; CHOSEN = null; $("setupSheet").hidden = true; $("bookSheet").hidden = true;
+  await loadSetup(); fetchPositions(); refresh(); showToast("Signed out", "var(--ink2)");
+}
+function renderWallet() {
+  const s = typeof SETUP !== "undefined" && SETUP, box = $("bkWallet");
+  if (!s || !s.signed_in) {
+    box.innerHTML = `<span class="dot off"></span><div class="who"><b>Not signed in</b><span>You're on the paper-money demo</span></div>
+      <div class="acts"><button class="btn go" id="bkConnect">Connect wallet</button></div>`;
+    $("bkConnect").onclick = () => { $("bookSheet").hidden = true; openConnect(); };
+    return;
+  }
+  const b = s.balances || {}, bal = (b.perp_account_value || 0) + (b.spot_usdc || 0);
+  box.innerHTML = `<span class="dot"></span><div class="who"><b title="${s.address}">${short(s.address)}</b><span>${usd(bal, 2)} on Hyperliquid${s.live_trading ? "" : " · dry run"}</span></div>
+    <div class="acts"><button class="btn" id="bkCopy">Copy</button><button class="btn" id="bkManage">Manage</button><button class="btn" id="bkOut">Sign out</button></div>`;
+  $("bkCopy").onclick = async () => {
+    try { await navigator.clipboard.writeText(s.address); showToast("Address copied", "var(--bull)"); }
+    catch (e) { showToast(s.address, "var(--ink2)"); }
+  };
+  $("bkManage").onclick = () => { $("bookSheet").hidden = true; openSetup(); };
+  $("bkOut").onclick = signOut;
+}
 function renderBook() {
+  renderWallet();
   const all = (POS || []).filter(p => p.status !== "failed"), open = all.filter(p => p.status === "open");
   const atRisk = open.reduce((a, p) => a + (p.max_loss ?? p.max_loss_quoted ?? 0), 0);
   const nowVal = open.reduce((a, p) => a + (((p.mark || {}).cashout || {}).net_pnl || 0), 0);
@@ -1103,7 +1139,7 @@ function renderBook() {
       <div class="r2"><span>${usd(p.stake)} stake</span>${sizeParts(p).map(x => `<span>${x}</span>`).join("")}<span>${when(p.created)}</span></div></div>`;
   }).join("") : `<div class="sub" style="padding:8px">No positions yet.</div>`;
 }
-document.querySelectorAll(".logo, .dt-logo").forEach(el => { el.title = "Your positions"; el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
+document.querySelectorAll(".logo, .dt-logo, .dt-avatar").forEach(el => { el.title = "Your wallet and positions"; el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
   el.addEventListener("click", openBook); el.addEventListener("keydown", e => { if (e.key === "Enter") openBook(); }); });
 $("posHist").addEventListener("click", openBook);
 ["dEqBox", "eqBox"].forEach(id => { $(id).addEventListener("click", openBook); $(id).addEventListener("keydown", e => { if (e.key === "Enter") openBook(); }); });
@@ -1898,7 +1934,7 @@ function renderSetup() {
     `<div class="su-step done"><div class="su-n">✓</div><div><b>Signed in</b><p>${short(s.address)} · <a id="suOut" style="cursor:pointer;text-decoration:underline">sign out</a></p></div></div>` + moneyCard +
     order.map((k, i) => { const [t, p, act] = cards[k]; const done = st[k], now = k === first;
       return `<div class="su-step ${done && !(k === "deposit" && TOPUP) ? "done" : now || (k === "deposit" && TOPUP) ? "now" : ""}"><div class="su-n">${k === "deposit" && done ? "$" : done ? "✓" : i + 2}</div><div><b>${t}</b><p>${p}</p>${done && k !== "deposit" ? "" : `<div class="su-act">${act}</div>`}${note(k)}</div></div>`; }).join("");
-  $("suOut").onclick = async () => { await api("/v1/auth/logout", { body: {} }); suMsg = {}; CHOSEN = null; $("setupSheet").hidden = true; await loadSetup(); fetchPositions(); refresh(); };
+  $("suOut").onclick = signOut;
   if ($("suDep")) {
     const word = st.deposit ? "Top up" : "Deposit";
     const sync = () => { const v = +$("suAmt").value || 0; if (suBusy !== "deposit") $("suDep").textContent = `${word} ${usd(v, 2)}`;
