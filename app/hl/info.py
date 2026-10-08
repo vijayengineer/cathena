@@ -35,3 +35,10 @@ class HLInfo:
 
     async def user_fills(self, user: str) -> list:
         return await self._post({"type": "userFills", "user": user})
+
+    async def user_fills_by_time(self, user: str, start_ms: int) -> list:
+        return await self._post({"type": "userFillsByTime", "user": user, "startTime": start_ms})
+
+    async def referral(self, user: str) -> dict:
+        """Referral and builder rewards for an address: builderRewards, unclaimedRewards, claimedRewards."""
+        return await self._post({"type": "referral", "user": user})

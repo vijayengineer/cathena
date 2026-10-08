@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cathena · Builder revenue</title>
+<link rel="icon" href="/assets/favicon-64.png">
+<style>
+:root { --bg: #070a12; --s1: #0d1320; --s2: #131b2b; --line: #222d42; --ink: #f4f1ea; --ink2: #a9b4c6; --ink3: #6f7c93; --bull: #36e3c8; --lev: #ffc857; --bear: #ff6f7d;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 28px 16px 60px; display: grid; gap: 18px; }
+#out { display: grid; gap: 18px; }
+header { display: flex; align-items: center; gap: 12px; }
+header img { width: 40px; height: 40px; }
+header h1 { font-size: 1.3rem; margin: 0; }
+header .sub { color: var(--ink3); font-size: .85rem; }
+header .r { margin-left: auto; color: var(--ink3); font: .78rem var(--mono); text-align: right; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.card { background: var(--s1); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 4px; min-width: 0; }
+.card span { color: var(--ink3); font-size: .78rem; }
+.card b { font: 700 1.6rem var(--mono); }
+.card small { color: var(--ink2); font-size: .8rem; }
+.bar { height: 8px; border-radius: 99px; background: var(--s2); overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: var(--bull); border-radius: 99px; }
+section { background: var(--s1); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+section h2 { font-size: .95rem; margin: 0 0 12px; }
+.days { display: flex; gap: 8px; align-items: flex-end; height: 120px; overflow-x: auto; }
+.day { display: grid; gap: 4px; justify-items: center; min-width: 54px; }
+.day i { width: 28px; background: var(--bull); border-radius: 6px 6px 2px 2px; display: block; }
+.day small { color: var(--ink3); font: .7rem var(--mono); }
+.day b { font: .72rem var(--mono); color: var(--ink2); }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--ink3); font-weight: 600; font-size: .75rem; border-top: 0; }
+td.n { font-family: var(--mono); text-align: right; }
+td a { color: var(--ink2); }
+.pos { color: var(--bull); }
+.note { color: var(--ink3); font-size: .8rem; }
+.gate { text-align: center; padding: 40px 16px; color: var(--ink2); }
+.gate a { color: var(--bull); }
+.tag { font: .7rem var(--mono); padding: 2px 6px; border-radius: 6px; background: var(--s2); color: var(--ink2); }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="/assets/cathena-logo-160.png" alt=""><div><h1>Builder revenue</h1><div class="sub">Cathena's Hyperliquid builder fees</div></div><div class="r" id="upd"></div></header>
+  <div id="out"><div class="gate">Loading…</div></div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const usd = (v, d = 2) => "$" + (v || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const short = a => a.slice(0, 6) + "…" + a.slice(-4);
+const when = ms => new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+async function load() {
+  let r;
+  try { r = await fetch("/v1/admin/builder-revenue", { credentials: "same-origin" }); } catch (e) { $("out").innerHTML = `<div class="gate">Couldn't reach the server.</div>`; return; }
+  if (r.status === 401 || r.status === 403) {
+    $("out").innerHTML = `<div class="gate">This page is for the builder wallet only.<br><br><a href="/">Sign in at Cathena</a> with the builder wallet, then come back to this page.</div>`; return;
+  }
+  const d = await r.json();
+  const pct = Math.min(100, d.unclaimed / d.claim_min * 100);
+  const max = Math.max(...d.by_day.map(x => x[1]), 1e-9);
+  $("upd").textContent = "updated " + when(d.updated).slice(11) + " · " + short(d.builder);
+  $("out").innerHTML = `
+    <div class="cards">
+      <div class="card"><span>Earned (Hyperliquid)</span><b class="pos">${usd(d.earned, 4)}</b><small>total builder rewards on ${short(d.builder)}</small></div>
+      <div class="card"><span>Unclaimed</span><b>${usd(d.unclaimed, 4)}</b><div class="bar"><i style="width:${pct}%"></i></div><small>${d.unclaimed >= d.claim_min ? "Ready to claim on app.hyperliquid.xyz/referrals" : usd(d.claim_min - d.unclaimed, 2) + " more until the $" + d.claim_min + " claim minimum"}</small></div>
+      <div class="card"><span>Claimed</span><b>${usd(d.claimed, 4)}</b><small>moved to the builder wallet</small></div>
+      <div class="card"><span>Traced to Cathena fills</span><b>${usd(d.from_fills, 4)}</b><small>${d.fills.length} fee-paying fills · ${d.users} users</small></div>
+    </div>
+    <section><h2>By day (UTC)</h2>${d.by_day.length ? `<div class="days">${d.by_day.map(([day, v]) => `<div class="day"><b>${usd(v, 3)}</b><i style="height:${Math.max(4, v / max * 80)}px"></i><small>${day.slice(5)}</small></div>`).join("")}</div>` : `<p class="note">No fee-paying fills yet.</p>`}</section>
+    <section><h2>Every fee-paying fill</h2>${d.fills.length ? `<div class="tbl"><table>
+      <tr><th>Time</th><th>User</th><th>Leg</th><th>Fill</th><th style="text-align:right">Size</th><th style="text-align:right">Price</th><th style="text-align:right">Builder fee</th></tr>
+      ${d.fills.map(f => `<tr><td>${when(f.time)}</td><td>${short(f.user)}</td><td><span class="tag">${f.leg === "binary" ? "binary " + f.coin : "BTC perp"}</span></td><td>${f.dir}</td>
+        <td class="n">${f.sz}</td><td class="n">${f.leg === "binary" ? (f.px * 100).toFixed(2) + "¢" : "$" + f.px.toLocaleString("en-US")}</td>
+        <td class="n pos">${f.hash ? `<a href="https://app.hyperliquid.xyz/explorer/tx/${f.hash}" target="_blank" rel="noopener">${usd(f.fee, 4)}</a>` : usd(f.fee, 4)}</td></tr>`).join("")}
+    </table></div>` : `<p class="note">No fee-paying fills yet. The fee is charged when a user cashes out early.</p>`}</section>
+    <p class="note">The fee applies only to early cash-outs: 50 bps on the binary sale and 5 bps on the perp close. Hyperliquid's own total can differ slightly from the traced fills.
+      Rewards are claimed on app.hyperliquid.xyz/referrals with the builder wallet once they reach $${d.claim_min}.${d.errors.length ? " Not loaded: " + d.errors.join(", ") : ""}</p>`;
+}
+load(); setInterval(() => { if (document.visibilityState === "visible") load(); }, 60000);
+</script>
+</body>
+</html>

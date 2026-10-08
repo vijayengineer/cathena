@@ -149,6 +149,12 @@ def watch(req: Request):
     return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
+@app.api_route("/buildercode", methods=["GET", "HEAD"])
+def buildercode():
+    """Builder-fee revenue page. Unlisted and not indexed; its data comes from an owner-only endpoint."""
+    return FileResponse(WEB.parent / "buildercode.html", headers={"Cache-Control": "no-cache", "X-Robots-Tag": "noindex, nofollow"})
+
+
 @app.api_route("/", methods=["GET", "HEAD"])
 def index():
     return FileResponse(WEB, headers={"Cache-Control": "no-store"})
@@ -502,6 +508,47 @@ def need_owner(req: Request) -> str:
     if not addr or addr != settings.owner:
         raise HTTPException(403, "Owner only.")
     return addr
+
+
+# builder-fee revenue: what Hyperliquid credits the builder address, and every user fill that paid it
+REVENUE_SINCE_MS = 1790812800000      # 2026-10-01, before Cathena's first live trade
+_revenue: dict = {"at": 0.0, "data": None}
+
+
+@app.get("/v1/admin/builder-revenue")
+async def builder_revenue(req: Request):
+    need_owner(req)
+    if _revenue["data"] and time.time() - _revenue["at"] < 60:
+        return _revenue["data"]
+    info, builder = state["info"], (settings.builder_address or settings.owner or "").lower()
+    fills, errors = [], []
+    for addr in list(state["users"].users):
+        if addr.lower() == builder:
+            continue                      # a builder never pays itself
+        try:
+            rows = await info.user_fills_by_time(addr, REVENUE_SINCE_MS)
+        except Exception as e:
+            errors.append(f"{addr[:6]}…{addr[-4:]}: {type(e).__name__}")
+            continue
+        for f in rows:
+            fee = float(f.get("builderFee") or 0)
+            if fee > 0:
+                fills.append({"time": f["time"], "user": addr, "coin": f["coin"], "leg": "binary" if f["coin"].startswith("#") else "perp",
+                              "dir": f.get("dir") or f.get("side"), "sz": float(f["sz"]), "px": float(f["px"]), "fee": fee, "hash": f.get("hash")})
+    fills.sort(key=lambda x: -x["time"])
+    by_day: dict[str, float] = {}
+    for f in fills:
+        day = time.strftime("%Y-%m-%d", time.gmtime(f["time"] / 1000))
+        by_day[day] = by_day.get(day, 0.0) + f["fee"]
+    try:
+        ref = await info.referral(builder)
+    except Exception as e:
+        ref, errors = {}, errors + [f"referral: {type(e).__name__}"]
+    data = {"builder": builder, "earned": float(ref.get("builderRewards") or 0), "unclaimed": float(ref.get("unclaimedRewards") or 0),
+            "claimed": float(ref.get("claimedRewards") or 0), "claim_min": 1.0, "from_fills": sum(f["fee"] for f in fills),
+            "by_day": sorted(by_day.items()), "fills": fills, "users": len(state["users"].users), "errors": errors, "updated": int(time.time() * 1000)}
+    _revenue.update(at=time.time(), data=data)
+    return data
 
 
 @app.get("/v1/admin/users")

@@ -26,6 +26,7 @@ cp -R web/assets frontend/assets
     { "source": "/v1/:path*", "destination": "https://${API}/v1/:path*" },
     { "source": "/media/:path*", "destination": "https://${API}/media/:path*" },
     { "source": "/watch", "destination": "https://${API}/watch" },
+    { "source": "/buildercode", "destination": "https://${API}/buildercode" },
     { "source": "/docs", "destination": "https://${API}/docs" },
     { "source": "/docs.md", "destination": "https://${API}/docs.md" }
   ],
