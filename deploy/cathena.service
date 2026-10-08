@@ -1,0 +1,20 @@
+# systemd *user* service: everything lives in ~/cathena-sleeve, no root needed.
+#   systemctl --user link ~/cathena-sleeve/deploy/cathena.service && systemctl --user enable --now cathena
+# Keep it running after logout (one-time, root):  sudo loginctl enable-linger $USER
+[Unit]
+Description=Cathena (API + web app)
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/cathena-sleeve
+# settings come from ~/cathena-sleeve/.env (read by the app); state and secrets in ./data
+Environment=DATA_DIR=%h/cathena-sleeve/data PYTHONUNBUFFERED=1
+# localhost only: the https proxy in front is the only way in
+ExecStart=%h/cathena-sleeve/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+UMask=0077
+
+[Install]
+WantedBy=default.target

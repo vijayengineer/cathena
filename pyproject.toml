@@ -1,0 +1,31 @@
+[project]
+name = "cathena-sleeve"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=50.0.2",
+    "eth-account>=0.13.7",
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "hyperliquid-python-sdk>=0.24.0",
+    "python-dotenv>=1.2.4",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+video = [
+    "kokoro-onnx>=0.6.1",
+    "librosa>=1.0.0",
+    "opencv-python-headless>=5.0.0.93",
+    "pillow>=12.3.0",
+    "playwright>=1.63.0",
+    "soundfile>=0.14.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,42 @@
+.env
+.venv/
+data/
+__pycache__/
+*.pyc
+video/frames/
+video/out/
+video/demo_data/
+video/film_build.html
+video/demo_server.log
+video/previews/
+video/ugc_build.html
+video/demo_data2/
+video/demo_server2.log
+video/bar2_build.html
+video/bar3_build.html
+video/bar_build.html
+video/assets/tts/*.onnx
+video/assets/tts/*.bin
+dist/
+*.pem
+*.key
+rndm_jenius
+frontend/
+
+# never published: internal docs, personal images, licensed footage/music, large media, local caches
+RNDM - V3.4.pdf
+RNDM Brand Kit.pdf
+*.pdf
+vijay.jpeg
+cathenaa (1).png
+video/assets/footage/
+video/assets/audio/
+video/assets/sfx/
+video/assets/brand/*.zip
+video/assets/brand/__MACOSX/
+video/Screenshot*.png
+media/
+.DS_Store
+.pytest_cache/
+*.log
+video/

@@ -1,0 +1,28 @@
+# docker compose up -d --build   (reads .env next to this file: DOMAIN + the app settings)
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      COOKIE_SECURE: "1"
+    volumes:
+      - cathena-data:/data          # users, positions, encrypted agent keys, secrets: back this up
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}         # set DOMAIN in .env, e.g. cathena.example.com
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data              # https certificates
+      - caddy-config:/config
+    restart: unless-stopped
+
+volumes:
+  cathena-data:
+  caddy-data:
+  caddy-config:

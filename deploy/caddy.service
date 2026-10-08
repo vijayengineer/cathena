@@ -1,0 +1,17 @@
+# https in front of Cathena, as a systemd *user* service. One-time, as root, so it may use ports 80/443:
+#   sudo setcap cap_net_bind_service=+ep ~/cathena-sleeve/.tools/caddy
+# Then: systemctl --user link ~/cathena-sleeve/deploy/caddy.service && systemctl --user enable --now caddy
+[Unit]
+Description=Caddy https proxy for Cathena
+After=network-online.target cathena.service
+
+[Service]
+WorkingDirectory=%h/cathena-sleeve
+EnvironmentFile=%h/cathena-sleeve/.env
+Environment=HOME=%h XDG_DATA_HOME=%h/cathena-sleeve/.caddy XDG_CONFIG_HOME=%h/cathena-sleeve/.caddy
+ExecStart=%h/cathena-sleeve/.tools/caddy run --config %h/cathena-sleeve/deploy/Caddyfile.server --adapter caddyfile
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

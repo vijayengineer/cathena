@@ -1,0 +1,15 @@
+# Caddy as a user service in front of Cathena (see deploy/caddy.service). DOMAIN comes from ~/cathena-sleeve/.env.
+{
+	admin off
+	storage file_system {$HOME}/cathena-sleeve/.caddy
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cathena · Watch</title>
+<meta name="description" content="Cathena: options made easy. One slider, max loss shown upfront, cash out any time. On Hyperliquid.">
+<meta property="og:title" content="Cathena · Options, made easy">
+<meta property="og:description" content="One slider. Max loss shown upfront. Cash out any time. On Hyperliquid.">
+<meta property="og:image" content="__ORIGIN__/media/cathena-teaser-16x9.jpg">
+<meta property="og:url" content="__ORIGIN__/watch">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__ORIGIN__/media/cathena-teaser-16x9.jpg">
+<meta property="og:video" content="__ORIGIN__/media/cathena-teaser-16x9.mp4">
+<link rel="icon" href="/assets/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Geist:wght@400;500;600;700&display=swap">
+<style>
+:root { --bg: #07060f; --s1: #0e0d17; --s2: #15141f; --line: rgba(255,255,255,.07); --ink: #f7f7f8; --ink2: #a4a3b5; --ink3: #6c6b80; --bull: #36e3c8; --vol: #5b7cff; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(1100px 520px at 50% -240px, rgba(91,124,255,.16), transparent 70%), var(--bg); color: var(--ink); font: 500 16px/1.5 "Geist", system-ui, sans-serif; }
+main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 56px; display: grid; gap: 28px; }
+header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+header img { width: 52px; height: 52px; image-rendering: pixelated; }
+header b { font-family: "Unbounded", system-ui, sans-serif; font-size: 1.5rem; letter-spacing: -.02em; }
+.cta { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 14px; font-weight: 800; color: #04211c; text-decoration: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bull) 78%, #fff), var(--bull) 55%); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 12px 30px -12px var(--bull); }
+h1 { margin: 0; font-family: "Unbounded", system-ui, sans-serif; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.03em; line-height: 1.05; text-wrap: balance;
+  background: linear-gradient(90deg, var(--bull), var(--vol)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { margin: 10px 0 0; color: var(--ink2); max-width: 60ch; }
+figure { margin: 0; display: grid; gap: 10px; }
+figcaption { color: var(--ink2); font-size: .92rem; } figcaption b { color: var(--ink); }
+video { width: 100%; max-width: 100%; border-radius: 18px; background: #000; border: 1px solid var(--line); display: block; }
+.pair { display: grid; grid-template-columns: minmax(0, 420px); justify-content: center; gap: 20px; }
+.pair video { aspect-ratio: 9 / 16; max-height: 78vh; object-fit: contain; }
+.points { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.points div { padding: 16px; border-radius: 16px; background: var(--s1); border: 1px solid var(--line); }
+.points b { display: block; margin-bottom: 4px; } .points span { color: var(--ink2); font-size: .9rem; }
+footer { color: var(--ink3); font-size: .82rem; }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="/assets/cathena-logo-160.png" alt=""><b>Cathena</b><a class="cta" id="try" href="/">Try Cathena →</a></header>
+  <section>
+    <h1>Options, made easy.</h1>
+    <p class="lede">One slider from Conservative to Moonshot. Your max loss is shown before you tap, and you can cash out any time. BTC daily binaries plus perps on Hyperliquid, in USDC.</p>
+  </section>
+  <figure>
+    <video src="/media/cathena-teaser-16x9.mp4" poster="/media/cathena-teaser-16x9.jpg" controls playsinline preload="metadata"></video>
+    <figcaption><b>Teaser</b> · 20 s</figcaption>
+  </figure>
+  <div class="pair">
+    <figure>
+      <video src="/media/cathena-bar-talk-9x16.mp4" poster="/media/cathena-bar-talk-9x16.jpg" controls playsinline preload="metadata"></video>
+      <figcaption><b>At the bar</b> · 24 s</figcaption>
+    </figure>
+  </div>
+  <div class="points">
+    <div><b>One slider</b><span>Bear to bull, Conservative to Moonshot. The app builds the position.</span></div>
+    <div><b>Loss is capped</b><span>Max loss shown upfront: 20–50% of your stake, or all of it in Moonshot.</span></div>
+    <div><b>Cash out any time</b><span>See the live cash-out value and take it in one slide.</span></div>
+    <div><b>Your keys, your funds</b><span>Funds stay in your Hyperliquid account. Cathena's trading key can't withdraw.</span></div>
+  </div>
+  <footer>Early access. Experimental software that uses real money. Not available in the US or restricted countries.</footer>
+</main>
+<script>
+// keep an invite code when someone arrives here from an invite link
+const inv = new URLSearchParams(location.search).get("invite");
+if (inv) document.getElementById("try").href = "/?invite=" + encodeURIComponent(inv);
+</script>
+</body>
+</html>

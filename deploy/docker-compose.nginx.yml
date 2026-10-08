@@ -1,0 +1,6 @@
+# For a server that already runs nginx on 80/443: start only the app, reachable from this machine only.
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.nginx.yml up -d --build app
+services:
+  app:
+    ports:
+      - "127.0.0.1:8000:8000"

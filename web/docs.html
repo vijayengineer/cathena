@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cathena · How it works</title>
+<meta name="description" content="How Cathena works: the dial, the HIP-4 binary, the synthetic option, volatility, the Greeks, cash-out and safety.">
+<link rel="icon" href="/assets/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root { --bg: #07060f; --s1: #0e0d17; --s2: #15141f; --s3: #1f1d2c; --line: rgba(255,255,255,.08); --ink: #f7f7f8; --ink2: #b4b3c5; --ink3: #77768b;
+  --bull: #36e3c8; --bear: #ff5c6c; --vol: #5b7cff; --lev: #ffc857; color-scheme: dark; }
+* { box-sizing: border-box; }
+html { scroll-padding-top: 84px; }
+body { margin: 0; background: radial-gradient(1100px 520px at 50% -260px, rgba(91,124,255,.14), transparent 70%), var(--bg); color: var(--ink);
+  font: 400 16px/1.65 "Geist", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #a9b8ff; }
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; padding: 12px 22px; background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top img { width: 40px; height: 40px; image-rendering: pixelated; }
+.top b { font-family: "Unbounded", system-ui, sans-serif; font-size: 1.2rem; letter-spacing: -.02em; }
+.top nav { margin-left: auto; display: flex; gap: 4px; }
+.top nav a { white-space: nowrap; color: var(--ink2); text-decoration: none; font-weight: 600; font-size: .92rem; padding: 8px 14px; border-radius: 10px; }
+.top nav a:hover { color: var(--ink); background: var(--s2); }
+.top nav a.on { color: var(--ink); background: var(--s3); }
+.top nav a.cta { color: #04211c; background: var(--bull); }
+.hero { max-width: 1180px; margin: 0 auto; padding: 40px 22px 8px; display: grid; gap: 18px; }
+.hero h1 { margin: 0; font-family: "Unbounded", system-ui, sans-serif; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.05; letter-spacing: -.03em; text-wrap: balance;
+  background: linear-gradient(90deg, var(--bull), var(--vol)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p { margin: 0; color: var(--ink2); max-width: 62ch; font-size: 1.05rem; }
+.hero video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; background: #000; border: 1px solid var(--line); display: block; margin-top: 8px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 22px 80px; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; align-items: start; }
+.toc { position: sticky; top: 84px; display: grid; gap: 2px; font-size: .88rem; }
+.toc span { color: var(--ink3); font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 6px; }
+.toc a { color: var(--ink3); text-decoration: none; padding: 6px 12px; border-left: 2px solid var(--line); }
+.toc a:hover { color: var(--ink); }
+.toc a.on { color: var(--ink); border-left-color: var(--bull); }
+article { max-width: 780px; min-width: 0; }
+article h2 { font-size: 1.6rem; line-height: 1.2; letter-spacing: -.02em; margin: 56px 0 14px; padding-top: 4px; font-weight: 700; }
+article h2:first-of-type { margin-top: 32px; }
+article p, article li { color: var(--ink2); }
+article strong { color: var(--ink); font-weight: 600; }
+article ul, article ol { padding-left: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+article code { font: 500 .86em "Geist Mono", ui-monospace, monospace; background: var(--s2); padding: 2px 6px; border-radius: 6px; color: var(--ink); }
+article > p:first-child { font-size: 1.12rem; color: var(--ink); }
+.tbl { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 14px; }
+article table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+article th { text-align: left; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink3); font-weight: 700; padding: 12px 14px; background: var(--s1); border-bottom: 1px solid var(--line); }
+article td { padding: 12px 14px; border-bottom: 1px solid var(--line); color: var(--ink2); vertical-align: top; }
+article tr:last-child td { border-bottom: 0; }
+article td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.math { margin: 18px 0; padding: 18px 20px; border-radius: 14px; background: var(--s1); border: 1px solid var(--line); overflow-x: auto; color: var(--ink); }
+.math .katex { font-size: 1.12em; }
+article img { display: block; width: 100%; max-width: 100%; height: auto; margin: 22px 0; border-radius: 16px; background: #fff; padding: 12px; }
+.flow { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 22px; margin: 24px 0; }
+.flow figure { margin: 0; display: grid; gap: 12px; align-content: start; }
+.flow img { margin: 0; padding: 0; background: #000; border-radius: 22px; border: 1px solid var(--line); box-shadow: 0 18px 40px -24px rgba(0,0,0,.8); aspect-ratio: 390 / 844; object-fit: cover; }
+.flow figcaption { font-size: .9rem; color: var(--ink2); line-height: 1.5; }
+.flow figcaption b { color: var(--ink); display: block; margin-bottom: 2px; }
+@media (max-width: 600px) { .flow { grid-template-columns: minmax(0, 1fr); } .flow img { max-width: 320px; } }
+pre.fallback { white-space: pre-wrap; color: var(--ink2); }
+footer { max-width: 1180px; margin: 0 auto; padding: 0 22px 48px; color: var(--ink3); font-size: .84rem; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; } .toc { display: none; } .top nav a:not(.cta) { display: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="/assets/cathena-logo-160.png" alt=""><b>Cathena</b>
+  <nav><a href="/" id="navTrade">Trade</a><a href="/watch">Watch</a><a href="/docs" class="on">How it works</a><a href="/" class="cta" id="navTry">Try Cathena</a></nav>
+</header>
+<section class="hero">
+  <h1>How Cathena works</h1>
+  <p>The dial, the two legs every position is built from, how volatility and the Greeks drive pricing and hedging, and what happens when you cash out.</p>
+  <video src="/media/cathena-teaser-16x9.mp4" poster="/media/cathena-teaser-16x9.jpg" controls playsinline preload="metadata"></video>
+</section>
+<div class="wrap">
+  <nav class="toc" id="toc" aria-label="On this page"><span>On this page</span></nav>
+  <article id="doc"><p>Loading…</p></article>
+</div>
+<footer>Early access. Experimental software that uses real money. Not available in the US or restricted countries.</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+// keep an invite code from the link on the buttons back into the app
+const inv = new URLSearchParams(location.search).get("invite");
+if (inv) ["navTrade", "navTry"].forEach(id => document.getElementById(id).href = "/?invite=" + encodeURIComponent(inv));
+
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+fetch("/docs.md", { cache: "no-cache" }).then(r => r.text()).then(md => {
+  const doc = document.getElementById("doc");
+  if (!window.marked) { doc.innerHTML = ""; const pre = document.createElement("pre"); pre.className = "fallback"; pre.textContent = md; doc.appendChild(pre); return; }
+  doc.innerHTML = marked.parse(md);
+  // formulas: ```latex blocks become typeset display maths
+  doc.querySelectorAll("code.language-latex").forEach(code => {
+    const box = document.createElement("div"); box.className = "math";
+    try { katex.render(code.textContent, box, { displayMode: true, throwOnError: false }); } catch (e) { box.textContent = code.textContent; }
+    code.closest("pre").replaceWith(box);
+  });
+  doc.querySelectorAll("table").forEach(t => { const w = document.createElement("div"); w.className = "tbl"; t.replaceWith(w); w.appendChild(t); });
+  // contents: one link per section, the current one highlighted while scrolling
+  const toc = document.getElementById("toc"), heads = [...doc.querySelectorAll("h2")];
+  heads.forEach(h => { h.id = slug(h.textContent); const a = document.createElement("a"); a.href = "#" + h.id; a.textContent = h.textContent; toc.appendChild(a); });
+  const links = [...toc.querySelectorAll("a")];
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle("on", a.hash === "#" + e.target.id)); }), { rootMargin: "-90px 0px -70% 0px" });
+  heads.forEach(h => io.observe(h));
+  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+}).catch(() => { document.getElementById("doc").textContent = "Couldn't load the docs. Refresh to try again."; });
+</script>
+</body>
+</html>

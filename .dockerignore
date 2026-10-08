@@ -1,0 +1,15 @@
+# secrets and state never go into the image
+.env
+data/
+dist/
+# local tooling and sources not needed to run
+.venv/
+.pytest_cache/
+**/__pycache__/
+**/*.pyc
+.DS_Store
+video/
+tests/
+docs/
+scripts/
+*.png

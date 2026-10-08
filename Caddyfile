@@ -1,0 +1,10 @@
+# Automatic https for $DOMAIN (point its DNS A record at this server first)
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	reverse_proxy app:8000
+}
