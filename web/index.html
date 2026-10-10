@@ -938,7 +938,8 @@ function animateTo(sr, q) {
 const MOVES = [-0.02, 0, 0.01, 0.03, 0.06];
 const fmtK = v => "$" + (v / 1000).toFixed(1) + "k";   // 85,712 → $85.7k, for tight labels
 // a move always says where BTC ends up and what it's measured from: "$85,712 (+3.0% from $83,211 now)"
-const moveText = X => { const m = X / S - 1; return Math.abs(m) < 0.0005 ? `$${fmtPx(X)} (where it is now)` : `$${fmtPx(X)} (${m > 0 ? "+" : "−"}${Math.abs(m * 100).toFixed(1)}% from $${fmtPx(S)} now)`; };
+// generic on purpose (no expiry, line or odds), so the same words work for any venue: "$85,243 (+3.0%)"
+const moveText = X => { const m = X / S - 1; return Math.abs(m) < 0.0005 ? `$${fmtPx(X)}` : `$${fmtPx(X)} (${m > 0 ? "+" : "−"}${Math.abs(m * 100).toFixed(1)}%)`; };
 function drawMarks() {
   const dir = state.s < 0 ? -1 : 1;
   let lastLeft = -100;   // markers closer than 11% of the width would collide: keep the first, drop the next
@@ -979,7 +980,7 @@ function showToast(text, color) { const t = $("toast"); t.textContent = text; t.
 function renderHero(q) {
   if (!q) { $("heroLbl").textContent = "No position yet"; tweenText("heroVal", 0, () => "0%", () => "big"); $("heroSub").textContent = "Drag the dial left or right."; return; }
   const x = state.pin, m = x / S - 1, v = q.pnl(x);
-  $("heroLbl").textContent = Math.abs(m) < 0.0005 ? "If BTC stays at $" + fmtPx(x) + " by 06:00" : "If BTC is at " + moveText(x) + " at 06:00";
+  $("heroLbl").textContent = Math.abs(m) < 0.0005 ? "If BTC stays at $" + fmtPx(x) : "If BTC is at " + moveText(x);
   tweenText("heroVal", v, z => retPct(z, q.C), z => "big " + (z > 0.5 ? "pos" : z < -0.5 ? "neg" : ""));
   $("heroSub").textContent = money(v, dp(v)) + " on your " + usd(q.C, dp(q.C)) + " stake · max loss " + retPct(-q.maxLoss, q.C).replace("−", "") + " (" + usd(q.maxLoss, dp(q.maxLoss)) + ")" + (q.C - q.maxLoss >= 0.005 ? " · " + usd(q.C - q.maxLoss, dp(q.C)) + " never at risk" : "");
 }
@@ -1465,7 +1466,7 @@ function renderDesk() {
     $("dStake").textContent = "Moonshot is off right now"; $("dStake").disabled = true;
   } else if (q) {
     const m = 0.03 * (bull ? 1 : -1), X = S * (1 + m), v = q.pnl(X);
-    $("dSum").innerHTML = `<div class="sub" style="font-size:.82rem">If BTC is at ${moveText(X)} at 06:00</div>
+    $("dSum").innerHTML = `<div class="sub" style="font-size:.82rem">If BTC is at ${moveText(X)}</div>
       <div class="big2 ${v >= 0 ? "pos" : "neg"}">${retPct(v, q.C)}</div><div class="sub" style="font-size:.84rem;margin-top:-6px">${money(v, dp(v))} on your ${usd(q.C, dp(q.C))} stake</div>
       <div class="row" style="font-size:.84rem"><span class="sub">You can lose at most</span><b class="mono">${usd(q.maxLoss, dp(q.maxLoss))}</b></div>
       <div class="row" style="font-size:.84rem"><span class="sub">Never at risk</span><b class="mono">${usd(q.C - q.maxLoss, dp(q.C))}</b></div>
