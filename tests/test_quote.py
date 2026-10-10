@@ -99,11 +99,3 @@ def test_moonshot_is_off_when_the_line_is_already_on_your_side():
     assert q.blocked and "at most +6%" in q.blocked and q.bin_n == 0 and q.units == 0 and q.max_loss == 0
     assert not build_quote(rich_no, -94, 20).blocked                     # Aggressive is still on
     assert not build_quote(SNAP, -100, 20).blocked and not build_quote(SNAP, 100, 20).blocked   # 0.60 / 0.41: Moonshot on
-
-
-def test_btc_price_is_the_oracle_that_hip4_settles_on():
-    from dataclasses import replace
-    assert SNAP.spot == (SNAP.perp_bid + SNAP.perp_ask) / 2          # no oracle known: the perp mid, as before
-    s = replace(SNAP, oracle=85648.0)
-    assert s.spot == 85648.0 and s.perp_mid == (SNAP.perp_bid + SNAP.perp_ask) / 2
-    assert s.to_ui()["perp"]["oracle"] == 85648.0                    # the page reads the same price

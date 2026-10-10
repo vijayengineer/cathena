@@ -56,17 +56,9 @@ class Snapshot:
     sz_decimals: int
     sigma1d: float
     spark: list = field(default_factory=list)
-    oracle: float = 0.0          # Hyperliquid's BTC oracle price: what HIP-4 outcomes settle against
 
     @property
     def spot(self) -> float:
-        """BTC price for the binary, pricing and scenarios: the oracle, since that's what the line settles on.
-        The perp leg still trades at its own bid/ask. Falls back to the perp mid if no oracle is known."""
-        return self.oracle if self.oracle > 0 else (self.perp_bid + self.perp_ask) / 2
-
-    @property
-    def perp_mid(self) -> float:
-        """Where the perp leg actually trades: used to value and hedge the synthetic option."""
         return (self.perp_bid + self.perp_ask) / 2
 
     @property
@@ -98,7 +90,7 @@ class Snapshot:
             "ts": self.ts, "target": self.target, "outcome": self.outcome, "expiry": self.expiry,
             "yes": {"asks": self.yes_asks, "bid": self.yes_bid},
             "no": {"asks": self.no_asks, "bid": self.no_bid},
-            "perp": {"bid": self.perp_bid, "ask": self.perp_ask, "mark": self.perp_mark, "oracle": self.oracle, "funding": self.funding,
+            "perp": {"bid": self.perp_bid, "ask": self.perp_ask, "mark": self.perp_mark, "funding": self.funding,
                      "maxLev": self.max_lev, "taker": PERP_TAKER_FEE, "szDecimals": self.sz_decimals},
             "sigma1d": self.sigma1d, "spark": self.spark,
             "derived": {"spot": self.spot, "hours": self.hours_left, "rv": self.rv, "ivBinary": self.iv_binary, "sigma": self.sigma},
@@ -173,8 +165,7 @@ class MarketService:
             self.info.l2_book(outcome_coin(outcome, 0)), self.info.l2_book(outcome_coin(outcome, 1)),
             self.info.l2_book("BTC"), self.info.meta_and_ctxs())
         i = next(k for k, a in enumerate(meta["universe"]) if a["name"] == "BTC")
-        oracle = float(ctxs[i].get("oraclePx") or 0)
-        spark = self._spark[:-1] + [round(oracle or (float(perp["levels"][0][0]["px"]) + float(perp["levels"][1][0]["px"])) / 2)]
+        spark = self._spark[:-1] + [round((float(perp["levels"][0][0]["px"]) + float(perp["levels"][1][0]["px"])) / 2)]
         self.snapshot = Snapshot(
             ts=int(now * 1000), outcome=outcome, target=target, expiry=expiry,
             yes_asks=_levels(yes["levels"][1]), yes_bid=float(yes["levels"][0][0]["px"]) if yes["levels"][0] else 0.0,
@@ -182,5 +173,5 @@ class MarketService:
             perp_bid=float(perp["levels"][0][0]["px"]), perp_ask=float(perp["levels"][1][0]["px"]),
             perp_mark=float(ctxs[i]["markPx"]), funding=float(ctxs[i]["funding"]),
             max_lev=int(meta["universe"][i]["maxLeverage"]), sz_decimals=int(meta["universe"][i]["szDecimals"]),
-            sigma1d=self._sigma, spark=spark, oracle=oracle)
+            sigma1d=self._sigma, spark=spark)
         return self.snapshot

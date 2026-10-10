@@ -747,8 +747,7 @@ function ivFromBinary() {
   return (lo + hi) / 2;
 }
 function applyEngine(snap) {
-  // BTC "now" = Hyperliquid's oracle price, which HIP-4 settles against (same as Snapshot.spot); perp mid if absent
-  SNAP = snap; S = snap.perp.oracle > 0 ? snap.perp.oracle : (snap.perp.bid + snap.perp.ask) / 2;
+  SNAP = snap; S = (snap.perp.bid + snap.perp.ask) / 2;
   HOURS = Math.max(0.01, (snap.expiry - snap.ts) / 3.6e6); T = HOURS / 8760;
   RV = snap.sigma1d * Math.sqrt(365); IV_BIN = ivFromBinary(); SIG = isNaN(IV_BIN) ? RV : Math.max(RV, IV_BIN); sT = SIG * Math.sqrt(T);
 }
