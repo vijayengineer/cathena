@@ -40,3 +40,10 @@ media/
 .pytest_cache/
 *.log
 video/
+
+# recordings and media never go in git
+*.mp4
+*.mov
+*.m4a
+*.wav
+*.webm

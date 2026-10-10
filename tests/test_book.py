@@ -182,3 +182,17 @@ def test_binary_buy_uses_half_a_percent_and_fills_a_thin_book_level_by_level():
     (size, limit), = sent
     assert err is None and n == size and size >= 180                     # most of the budget, not a timid slice
     assert limit == round(0.06399 * 1.005, 5)                             # 0.5% over the worst level it needs
+
+
+def test_settlement_price_is_the_next_days_line():
+    import asyncio
+    from types import SimpleNamespace
+    from app.book import Book
+    book = Book.__new__(Book)
+    expiry = 1791439200000
+    book.market = SimpleNamespace(snapshot=SimpleNamespace(expiry=expiry + 86_400_000, target=82638.0))   # Hyperliquid's next line
+    book.store = SimpleNamespace(event=lambda *a, **k: None)
+    pos = {"id": "x", "expiry": expiry, "target": 84325.0, "bull": True,
+           "binary": {"n": 182, "cost": 11.88}, "synthetic": {"units": 0.0, "held": 0.0, "avg_entry": 0.0, "realized": 0.0, "fees": 0.0}}
+    asyncio.run(book._settle(pos))
+    assert pos["binary"]["settle_px_estimate"] == 82638.0 and pos["binary"]["payout"] == 0.0 and pos["status"] == "settled"

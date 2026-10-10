@@ -286,10 +286,10 @@ class Book:
 
     async def _rebalance(self, pos: dict, snap: Snapshot, force: bool = False) -> None:
         syn = pos["synthetic"]
-        target = self._target(pos, snap.spot, snap.ts)
+        target = self._target(pos, snap.perp_mid, snap.ts)
         syn["last_target"] = target
         gap = target - syn["held"]
-        if (force or abs(gap) > BAND * syn["units"]) and abs(gap) * snap.spot >= max(self.min_notional, 1.0):
+        if (force or abs(gap) > BAND * syn["units"]) and abs(gap) * snap.perp_mid >= max(self.min_notional, 1.0):
             await self._perp_trade(pos, gap, snap, "open" if force else "rebalance")
 
     async def _flatten(self, pos: dict, snap: Snapshot, status: str, fee_bps: float = 0) -> Fill | None:
@@ -299,7 +299,7 @@ class Book:
             f = await self._perp_trade(pos, -syn["held"], snap, status, reduce_only=True, fee_bps=fee_bps)
         if abs(syn["held"]) < 1e-5:
             syn["status"] = status
-            self.store.event("synthetic_closed", id=pos["id"], status=status, pnl=round(syn_pnl(syn, snap.spot), 2))
+            self.store.event("synthetic_closed", id=pos["id"], status=status, pnl=round(syn_pnl(syn, snap.perp_mid), 2))
         return f
 
     async def tick(self) -> None:
@@ -317,7 +317,7 @@ class Book:
                     if syn["status"] in ("active", "pending") and syn["units"]:
                         if now >= pos["expiry"] - CLOSE_BEFORE_MS:
                             await self._flatten(pos, snap, "closed_before_settlement")
-                        elif syn_pnl(syn, snap.spot) <= -syn["budget"]:
+                        elif syn_pnl(syn, snap.perp_mid) <= -syn["budget"]:
                             await self._flatten(pos, snap, "budget_used")
                         else:
                             syn["status"] = "active"
@@ -333,9 +333,14 @@ class Book:
                 self._save()
 
     async def _settle(self, pos: dict) -> None:
-        """Binary pays automatically on HyperCore; record it using the BTC price at the settlement minute."""
-        c = await self.market.info.candles("BTC", "1m", pos["expiry"] - 60_000, pos["expiry"] + 60_000)
-        px = float(next((k["o"] for k in c if int(k["t"]) == pos["expiry"]), c[-1]["c"])) if c else self.snap.spot
+        """Binary pays automatically on HyperCore. The settlement price is the oracle at expiry, which Hyperliquid
+        also uses as the next day's line, so take that when the next outcome is up; else the perp at that minute."""
+        snap = self.market.snapshot
+        if snap and snap.expiry == pos["expiry"] + 86_400_000 and snap.target:
+            px = float(snap.target)
+        else:
+            c = await self.market.info.candles("BTC", "1m", pos["expiry"] - 60_000, pos["expiry"] + 60_000)
+            px = float(next((k["o"] for k in c if int(k["t"]) == pos["expiry"]), c[-1]["c"])) if c else self.snap.spot
         win = px >= pos["target"] if pos["bull"] else px < pos["target"]
         b = pos["binary"]
         b["payout"] = float(b["n"]) if win else 0.0
@@ -415,7 +420,7 @@ class Book:
             perp_notional = perp_fill.filled * perp_fill.avg_px if perp_fill and perp_fill.filled else 0.0
             fee = proceeds * fee_bin_bps / 1e4 + perp_notional * fee_perp_bps / 1e4
             pos["cashout_fee"] = fee
-            pos["realized_pnl"] = proceeds - b["cost"] + syn_pnl(pos["synthetic"], snap.spot) - fee
+            pos["realized_pnl"] = proceeds - b["cost"] + syn_pnl(pos["synthetic"], snap.perp_mid) - fee
             pos["status"] = "closed"
             self.store.event("cashed_out", id=pid, pnl=round(pos["realized_pnl"], 2), fee=round(fee, 2), builder=fee > 0 and self.venue.mode == "live")
             self._save()
@@ -432,14 +437,14 @@ class Book:
         p_yes = prob_above(snap.spot, pos["target"], T, snap.sigma)
         p_side = p_yes if pos["bull"] else 1 - p_yes
         bid = snap.yes_bid if pos["bull"] else snap.no_bid
-        s_pnl = syn_pnl(syn, snap.spot)
+        s_pnl = syn_pnl(syn, snap.perp_mid)
         out["mark"] = {
             "spot": snap.spot,
             "binary_close_value": b["n"] * bid,
             "binary_fair_value": b["n"] * p_side,
             "synthetic_pnl": s_pnl,
             "synthetic_budget_used": (max(0.0, -s_pnl) / syn["budget"]) if syn["budget"] else 0.0,
-            "target_delta": self._target(pos, snap.spot, snap.ts) if syn["units"] else 0.0,
+            "target_delta": self._target(pos, snap.perp_mid, snap.ts) if syn["units"] else 0.0,
             "pnl_close_now": b["n"] * bid - b["cost"] + s_pnl,
             "pnl_fair": b["n"] * p_side - b["cost"] + s_pnl,
             "cashout": self.cashout_quote(pos, snap),
